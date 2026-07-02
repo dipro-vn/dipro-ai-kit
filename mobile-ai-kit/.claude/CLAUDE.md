@@ -89,7 +89,7 @@ Hãy tuân thủ mọi quy định sau đây:
 0. Nếu bạn đang tìm kiếm file, folder, v.v., vui lòng sử dụng [codegraph](#tool-codegraph).
 1. Lấy spec từ [notebookLM](#tool-notebooklm), nếu không có, vui lòng hỏi tôi.
 2. Nếu task là implement, integration hoặc có yêu cầu từ tôi, hãy check design từ [figma](#tool-figma), nếu không có, vui lòng hỏi tôi.
-3. Tiến hành code dựa trên spec và design đã nhận, yêu cầu sử dụng skill phù hợp với [language](#language) và tuân thủ [coding convention](#reference-1).
+3. Tiến hành code dựa trên spec và design đã nhận, yêu cầu sử dụng skill [find-skills](../.skills/find-skills/README.md) với [language](#language) và tuân thủ [coding convention](#reference-1).
 4. Chạy các lệnh kiểm tra cú pháp (syntax check) cho [language](#language).
 5. Đánh giá mức độ ảnh hưởng (impact assessment) và gửi cho tôi đánh giá mức độ ảnh hưởng (impact assessments) của bạn
 6. Vui lòng sử dụng các tag sau cho từng bước để track tiến độ (progress):
