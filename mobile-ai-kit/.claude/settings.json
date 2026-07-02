@@ -79,7 +79,8 @@
       "Edit(__tests__/**)",
       "Write(lib/**)",
       "Write(src/**)",
-      "Write(test/**)"
+      "Write(test/**)",
+      "mcp__codegraph__*"
     ],
     "ask": [
       // Các thao tác có ảnh hưởng nhưng cần xác nhận thủ công
@@ -148,6 +149,16 @@
           {
             "type": "command",
             "command": "node -e \"const d=JSON.parse(require('fs').readFileSync(0,'utf8'));const f=d.tool_input&&d.tool_input.file_path||'';const {execSync}=require('child_process');try{if(/\\.i18n\\.json$/.test(f)){execSync('dart run slang')}else if(/\\.dart$/.test(f)){execSync('dart format '+JSON.stringify(f))}else if(/\\.(ts|tsx|js|jsx)$/.test(f)){execSync('npx --no-install prettier --write '+JSON.stringify(f))}}catch(e){}\""
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "codegraph prompt-hook"
           }
         ]
       }
