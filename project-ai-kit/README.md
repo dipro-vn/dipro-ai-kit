@@ -139,6 +139,19 @@ hoặc: "hãy là BA, làm SPEC cho \<feature\>". Từ đây pipeline BMAD tự 
 
 Chi tiết đầy đủ pipeline (thứ tự, Contract Lock, Memory Update Gate) → `AGENTS.md` section `<bmad_workflow>` và `.claude/workflows/new-feature.md`.
 
+**Shortcut chạy cả pipeline 1 lệnh (không PM):**
+
+```
+/create-feature <feature> [mô tả]     # Planning: BA → Design → Tasks, dừng ở gate để review
+/create-feature <feature> build       # Build: Dev → QA → QC, chạy sau khi đã duyệt Planning
+```
+
+Dùng khi muốn chạy nhanh cả pipeline mà không gõ từng lệnh; PM (`/create-plan`, `/create-backlog`) vẫn chạy riêng khi cần timeline/assignee thật.
+
+### Chạy Automation Test (Playwright E2E)
+
+Hướng dẫn setup repo E2E riêng, cài Playwright, chạy `/qc-automation` và đọc report → `Automation_Test.md`.
+
 ---
 
 ## Cấu trúc kit
@@ -146,13 +159,15 @@ Chi tiết đầy đủ pipeline (thứ tự, Contract Lock, Memory Update Gate)
 ```
 project-ai-kit/
 ├── CLAUDE.md, POLICIES.md, AGENTS.md   ← root docs, always-loaded qua CLAUDE.md
+├── README.md            ← guide này — setup A→Z + quy trình feature
+├── Automation_Test.md   ← guide riêng — setup + chạy Playwright E2E automation test
 └── .claude/
-    ├── agents/       ← 12 persona (BMAD core + init-agent)
+    ├── agents/       ← persona (BMAD core + init-agent)
     ├── commands/     ← slash command, thin entry point → agent tương ứng
     ├── skills/       ← technical + process skills, load on-demand
     ├── context/      ← business/technical memory — phần lớn RỖNG, điền dần qua BA/PM/init-agent
     ├── rules/        ← coding-style, security, git-workflow, stack-constraints...
-    ├── workflows/    ← BMAD pipeline reference, db-connect templates
+    ├── workflows/    ← bmad-plan-phase.js/bmad-build-phase.js (dùng bởi /create-feature) + pipeline reference + db-connect templates
     └── templates/    ← mkdocs.yml + docs-index.md + mkdocs-requirements.txt (Bước 5b, optional)
 ```
 

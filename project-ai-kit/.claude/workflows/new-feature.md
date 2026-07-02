@@ -2,6 +2,8 @@
 
 Quy trình chuẩn để đưa một feature mới từ yêu cầu đến production.
 
+> **Shortcut:** `/create-feature <feature> [mô tả]` rồi `/create-feature <feature> build` chạy gộp Bước 1→3 và Bước 5→6 bên dưới (không gồm Bước 4 PM) qua 2 workflow `bmad-plan-phase`/`bmad-build-phase`. Dùng bảng dưới đây khi cần chạy tay từng bước hoặc debug 1 bước cụ thể. Guide chạy automation test (Bước 6, `qc-automation-agent`) → `Automation_Test.md` ở root kit.
+
 ---
 
 ## Tổng quan pipeline
