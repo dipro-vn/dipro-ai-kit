@@ -14,42 +14,91 @@ Windows PowerShell
 irm https://claude.ai/install.ps1 | iex
 ```
 
-## 2. Prompt tạo CLAUDE.md cho codebase
+## 2. Tích hợp fe-kit vào dự án
 
+### Bước 1: Copy thư mục `.claude/` vào root dự án
+
+```bash
+# Từ thư mục fe-kit, copy toàn bộ .claude/ vào dự án của bạn
+cp -r /path/to/dipro-ai-kit/fe-kit/.claude /path/to/your-project/
+```
+
+Hoặc nếu dự án đang có sẵn `.claude/`, merge thủ công từng thư mục con:
+
+```bash
+cp -r fe-kit/.claude/agents     your-project/.claude/
+cp -r fe-kit/.claude/commands   your-project/.claude/
+cp -r fe-kit/.claude/skills     your-project/.claude/
+cp    fe-kit/.claude/settings.local.json  your-project/.claude/
+```
+
+Sau khi copy, cấu trúc dự án sẽ có dạng:
+
+```
+your-project/
+├── .claude/
+│   ├── agents/          # 5 agent: analyst, architect, developer, tester, reviewer
+│   ├── commands/        # 5 workflow: new-feature, bug-fix, code-review, refactoring, test-generation
+│   ├── skills/          # ~92 skill (react-*, nextjs-*, typescript-*, mui-*, tailwind-*, ...)
+│   └── settings.local.json
+├── src/
+├── package.json
+└── CLAUDE.md            # ← cần tạo ở bước 2
+```
+
+### Bước 2: Tạo `CLAUDE.md` cho dự án
+
+Mở Claude Code trong thư mục dự án và chạy prompt sau (thay nội dung trong `[...]`):
+
+```
 <role>
-Bạn là Tech Lead đang onboard một kỹ sư mới vào [CurrentProject] (công cụ lập kế hoạch mục tiêu theo trọng số của chúng tôi).
+Bạn là Tech Lead đang onboard một kỹ sư mới vào [Tên dự án].
 </role>
 
 <context>
-[User tự điền: mô tả [CurrentProject] làm gì, core logic, cách tính toán...]
+[Mô tả dự án: làm gì, core logic, tech stack chính, các điểm đặc thù]
 </context>
 
 <task>
 Tạo file CLAUDE.md ở thư mục gốc.
-Đồng thời, áp dụng progressive disclosure bằng cách tạo các file tài liệu riêng trong thư mục `.claude/docs/` cho từng mảng kỹ thuật chi tiết (ví dụ: `.claude/docs/architecture.md`, `.claude/docs/state_management.md`, `.claude/docs/date_logic.md`).
+Áp dụng progressive disclosure bằng cách tạo các file tài liệu riêng trong thư mục `.claude/docs/`.
 </task>
 
 <requirements>
-- CLAUDE.md tối đa 150 dòng. Chỉ tập trung vào thông tin áp dụng chung cho toàn dự án.
-- Dùng Progressive Disclosure: Giữ CLAUDE.md thuần túy là file index và điều hướng ở mức tổng quan. Tách toàn bộ chi tiết kỹ thuật sâu, data model, cấu trúc component và logic phức tạp ra các file riêng có tên phù hợp trong `.claude/docs/`.
-- Viết cho một agent/developer chưa từng thấy codebase này.
-- Mọi mục phải actionable (hành động được), không trang trí.
+- CLAUDE.md tối đa 150 dòng, chỉ tập trung thông tin áp dụng chung cho toàn dự án.
+- Dùng Progressive Disclosure: CLAUDE.md là file index, tách chi tiết kỹ thuật ra `.claude/docs/`.
+- Viết cho agent/developer chưa từng thấy codebase này.
+- Mọi mục phải actionable, không trang trí.
 </requirements>
 
-Bao gồm chính xác các mục sau trong CLAUDE.md, theo đúng thứ tự này:
+Bao gồm các mục sau trong CLAUDE.md theo đúng thứ tự:
+1. Project Overview (2-3 câu)
+2. Tech Stack (kèm version)
+3. Dev Commands (install, dev, build, test)
+4. Core Logic Summary
+5. Key Constraints
+6. Additional Documentation (link tới .claude/docs/)
+```
 
-1. Project Overview: [CurrentProject] làm gì, trong 2-3 câu.
-2. Tech Stack: liệt kê kèm version khi cần.
-3. Dev Commands: cách cài đặt, chạy dev server, và build.
-4. Core Logic Summary: tóm tắt ngắn gọn về cách tính trọng số.
-5. Key Constraints: những thứ Claude tuyệt đối không được thay đổi hoặc tự suy diễn.
-6. Additional Documentation: link trực tiếp tới các file domain cụ thể đã tạo trong thư mục `.claude/docs/`.
+### Bước 3: Kiểm tra kit hoạt động
 
-<tone>
-Mang tính kỹ thuật. Trực diện. Không rườm rà. Không ngôn ngữ marketing.
-</tone>
+Trong Claude Code tại thư mục dự án:
 
-## 3. Đối ứng task với 1 command
+```
+/new-feature Thêm trang profile: avatar upload, cập nhật họ tên/email.
+```
+
+Nếu Claude phân tích yêu cầu → đề xuất plan → chờ xác nhận → implement, tức là kit đã hoạt động đúng.
+
+### Ví dụ thực tế
+
+Xem [`sample-web-app`](../sample-web-app/) để tham khảo một dự án Next.js đã tích hợp fe-kit hoàn chỉnh, bao gồm `CLAUDE.md` và cấu trúc `.claude/docs/` cụ thể.
+
+---
+
+## 3. Cài đặt FIGMA MCP: https://github.com/vkhanhqui/figma-mcp-go
+
+## 4. Đối ứng task với 1 command
 
 Trong thư mục dự án đã có `CLAUDE.md`, gọi command tương ứng với task:
 
@@ -86,5 +135,3 @@ Claude sẽ tự điều phối toàn bộ pipeline: phân tích yêu cầu → 
 ├── skills/          # ~90 skill theo prefix: react-*, nextjs-*, typescript-*, form-*, react-query-*, mui-*, tailwind-*, security-*, performance-*, testing-jest-*, ...
 └── settings.local.json  # Git & security guardrails
 ```
-
-## 4. Cài đặt FIGMA MCP: https://github.com/vkhanhqui/figma-mcp-go
