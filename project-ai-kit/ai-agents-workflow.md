@@ -50,144 +50,293 @@
 
 ## 3. Chi tiết per agent
 
+> Mỗi flowchart mô tả trình tự **Đọc → Query/Check → Thực thi → Handover** cho 1 agent. Chi tiết đầy đủ (danh sách file đọc chính xác, template output, danh sách "Không được làm") → xem `.claude/agents/<agent-name>.md`.
+
 ### 3.0 `init-agent` — Kit Setup Assistant
 
-| | |
-|---|---|
-| **Đọc** | `AGENTS.md` (root) — check placeholder Ecosystem |
-| **Thực thi** | Hỏi 8 câu: tên dự án, docs root, repos + vai trò + stack, Epic code, actors, payment/integration, gotchas 2 repo dễ nhầm, cross-repo features |
-| **Output** | `AGENTS.md` + `.claude/context/specification.md` + `technical.md` + `.claude/rules/project-structure.md` + `stack-constraints.md` (nếu stack khác default) + `POLICIES.md` (nếu payment thay đổi) |
-| **Handover** | → BA (`/create-spec <feature đầu tiên>`) |
-| **Không** | Sửa source code · Ghi đè khi đã init (phải hỏi user chọn a/b/c) |
+```mermaid
+flowchart TD
+    A[User: /init-kit] --> B[Đọc AGENTS.md root<br/>check placeholder Ecosystem]
+    B --> C{Đã init trước đó?}
+    C -- Có --> D[Hỏi user chọn a/b/c<br/>a: overwrite<br/>b: merge phần thiếu<br/>c: cancel]
+    C -- Chưa --> E[Hỏi 8 câu setup:<br/>1 Tên dự án + domain<br/>2 Docs root path<br/>3 Repos + vai trò + stack<br/>4 Epic code per repo<br/>5 Actors/personas<br/>6 Payment/integration<br/>7 Gotchas 2 repo dễ nhầm<br/>8 Cross-repo features]
+    D --> E
+    E --> F[Ghi AGENTS.md +<br/>context/specification.md +<br/>context/technical.md +<br/>rules/project-structure.md]
+    F --> G{Stack khác default?}
+    G -- Có --> H[Update rules/stack-constraints.md]
+    G -- Không --> I{Payment thay đổi?}
+    H --> I
+    I -- Có --> J[Update POLICIES.md §5]
+    I -- Không --> K[Bàn giao BA<br/>/create-spec feature-đầu-tiên]
+    J --> K
+```
+
+**❌ Không:** sửa source code · ghi đè khi đã init (phải hỏi user a/b/c).
+
+---
 
 ### 3.1 `ba-agent` — Business Analyst
 
-| | |
-|---|---|
-| **Đọc Bước 1** | `.claude/context/specification.md` · `doc-structure.md` · `.claude/skills/business-analyst/SKILL.md` · `tilth_files("**/SPEC.md")` |
-| **Đọc Bước 1.5 (mới)** | `business-flows/business-flow-index.md` (nếu có) · outline `## Mô tả nghiệp vụ` các SPEC hiện có · full SPEC user chọn liên quan |
-| **Thực thi** | Bước 2: hỏi 10 câu discovery (actor, problem, precondition, happy path, edge case, AC, related feature, mobile, real-time, integration) → Bước 3: xác định path `<DOCS_ROOT>/features/<feature>/SPEC.md` → Bước 4: viết SPEC theo template |
-| **Output** | `SPEC.md` — sections: Mô tả nghiệp vụ · Actors & Preconditions · Happy Path · Alternative Flows & Edge Cases · Acceptance Criteria · Out of Scope · **Screens table** (Screen Code + Screen + Actor + App + Screen Type + Mô tả + Figma Link) |
-| **Handover** | → Tech Lead Design (2a) + Designer (2c) + QC (2b) chạy song song |
-| **Không** | Đưa giải pháp kỹ thuật · Sửa source code · Tự đoán khi thiếu info |
+```mermaid
+flowchart TD
+    A["User: /create-spec &lt;feature&gt;"] --> B[Đọc context/specification.md +<br/>doc-structure.md +<br/>skill business-analyst]
+    B --> C["tilth_files SPEC.md +<br/>đọc business-flow-index.md +<br/>outline ## Mô tả nghiệp vụ SPEC hiện có"]
+    C --> D{Có SPEC liên quan?}
+    D -- Có --> E[User chọn related SPEC<br/>→ đọc full]
+    D -- Không --> F[Hỏi 10 câu discovery:<br/>actor · problem · precondition ·<br/>happy path · edge case · AC ·<br/>related · mobile · real-time · integration]
+    E --> F
+    F --> G{Đủ thông tin?}
+    G -- Không --> H[Hỏi user - KHÔNG tự đoán]
+    H --> F
+    G -- Đủ --> I["Viết SPEC.md:<br/>Mô tả nghiệp vụ · Actors ·<br/>Happy/Alt/Edge · AC ·<br/>Out of Scope · Screens table<br/>(Code+Screen+Actor+App+Type+Figma Link)"]
+    I --> J[Bàn giao SONG SONG:<br/>Tech Lead Design 2a +<br/>Designer 2c +<br/>QC 2b]
+```
+
+**❌ Không:** đưa giải pháp kỹ thuật · sửa source code · skip Bước 1.5 scan SPEC cũ.
+
+---
 
 ### 3.2 `techlead-design-agent` — Tech Lead Design
 
-| | |
-|---|---|
-| **Đọc Bước 1** | SPEC.md · `.claude/context/technical.md` · `doc-structure.md` · `.claude/skills/solution-architect/SKILL.md` |
-| **Đọc Figma (optional)** | `get_design_context` + `get_screenshot` (nếu SPEC.md ## Screens có Figma URL) |
-| **Đọc code Bước 3** | `tilth_search` · `tilth_read` · **BẮT BUỘC `tilth_deps`** blast radius |
-| **Thực thi** | Bước 2: map nghiệp vụ → repo (theo bảng Ecosystem) · Bước 3: phân tích blast radius · Bước 4: viết DESIGN per repo |
-| **Output** | `<DOCS_ROOT>/features/<feature>/<repo>/DESIGN.md` — 7 sections: Tổng quan thay đổi · Database Changes · **API Definition** (nguồn Contract Lock) · Service Layer · Interface cross-repo · Luồng xử lý · Non-Regression Risks |
-| **Handover** | → Tech Lead Tasks (sau khi Designer xong Figma URL) |
-| **Không** | Viết source code · Tự đoán khi SPEC mơ hồ · Bypass `tilth_deps` |
+```mermaid
+flowchart TD
+    A["/create-design &lt;SPEC.md&gt;"] --> B[Đọc SPEC.md +<br/>context/technical.md +<br/>doc-structure.md +<br/>skill solution-architect]
+    B --> C{SPEC ## Screens<br/>có Figma URL?}
+    C -- Có --> D[get_design_context +<br/>get_screenshot]
+    C -- Không --> E[Map nghiệp vụ → repo<br/>theo bảng Ecosystem]
+    D --> E
+    E --> F[tilth_search + tilth_read<br/>pattern hiện có]
+    F --> G[BẮT BUỘC tilth_deps<br/>blast radius]
+    G --> H{SPEC mơ hồ?}
+    H -- Có --> I[Hỏi user - KHÔNG tự đoán]
+    I --> H
+    H -- Không --> J[Viết DESIGN.md per repo — 7 sections:<br/>1 Tổng quan · 2 Database Changes ·<br/>3 API Definition Contract Lock ·<br/>4 Service Layer · 5 Interface cross-repo ·<br/>6 Luồng xử lý · 7 Non-Regression Risks]
+    J --> K[Bàn giao Tech Lead Tasks<br/>sau khi Designer có Figma URL]
+```
+
+**❌ Không:** viết source code · tự đoán khi SPEC mơ hồ · bypass `tilth_deps`.
+
+---
 
 ### 3.3 `qc-agent` — QC Manual Tester
 
-> **Chạy 3 lần trong pipeline:** lần 1 = sinh TC sau SPEC (2b — pipeline 4 bước) · lần 2 = execution checklist trước release (7a) · lần 3 song song với 7c (QC Automation)
+> **Chạy 3 lần trong pipeline:** lần 1 = sinh TC sau SPEC (2b — pipeline 3 bước) · lần 2 = execution checklist trước release (7a) · lần 3 song song với 7c (QC Automation).
 
-| | |
-|---|---|
-| **Đọc Bước 1** | SPEC.md · `.claude/skills/rbt_manual_testing/SKILL.md` (4 sections: context/analyze/plan/gen) |
-| **Đọc Figma (optional)** | `get_screenshot` + `get_design_context` (từ ## Screens Figma Link) |
-| **Thực thi** | **Pipeline chính (3 bước)**: `/test/analyze-req` (Q&A + AC + Screen Inventory) → `/test/plan-tcs` (Screen → Component + Risk + Technique) → `/test/gen-tcs` (TC chi tiết + Visual + Validation). **On-demand (ngoài pipeline)**: `/test/review-tcs` (deep review 8 tiêu chí khi ≥2 QC) · `/test/export-xlsx <path> web\|app` (Excel bàn giao) · `/test/generate_regression_suite` (sau code change) · `/test/generate_test_execution_checklist` (pre-release) · `/test/gen-bug-report` (chuẩn hóa bug). **Delta update** khi SPEC đổi: re-run pipeline (analyze-req merge vào analysis.md có sẵn). |
-| **Output** | `<DOCS_ROOT>/features/<feature>/test-cases/<module>/{analysis.md, plan-tcs.md, test-cases.md}` (pipeline) · `review_report.md` · `test-cases.xlsx` (on-demand) · `regression_<release>.md` · `checklist_<release>.md` · `bug-reports/BUG_*.md` — mỗi TC có Traceability ID (link về AC-XX) + Visual states (Normal/Focus/Filled/Error/Disabled/Loading) |
-| **Không** | Sinh TC khi chưa đọc SPEC · Test data placeholder · Gộp validation nhiều field · Auto-submit bug lên Backlog · Lẫn vai trò với qa-agent (không chạy test suite) · Chạy `/gen-tcs` khi chưa có `plan-tcs.md` · Skip user confirm sau `/analyze-req` và `/plan-tcs` |
+```mermaid
+flowchart TD
+    A[QC được gọi] --> B{Lần thứ mấy?}
+
+    B -- "Lần 1: sau SPEC (2b)" --> C[Đọc SPEC.md +<br/>skill rbt_manual_testing]
+    C --> C1["/test/analyze-req<br/>Q&amp;A + AC + Screen Inventory"]
+    C1 --> C2{User confirm?}
+    C2 -- Chưa --> C1
+    C2 -- OK --> C3["/test/plan-tcs<br/>Screen → Component + Risk + Technique"]
+    C3 --> C4{User confirm?}
+    C4 -- Chưa --> C3
+    C4 -- OK --> C5["/test/gen-tcs<br/>TC chi tiết + Visual states +<br/>Traceability ID → AC-XX"]
+    C5 --> C6["Output: test-cases/&lt;module&gt;/<br/>{analysis, plan-tcs, test-cases}.md"]
+
+    B -- "Lần 2: pre-release (7a)" --> D["/test/generate_test_execution_checklist"]
+    D --> D1[Output: checklist_release.md]
+
+    B -- "Lần 3: song song 7c" --> E[Cross-check với E2E<br/>của qc-automation-agent]
+
+    C6 --> F{On-demand?}
+    F -- ≥2 QC review chéo --> F1["/test/review-tcs (8 tiêu chí)"]
+    F -- Bàn giao Excel --> F2["/test/export-xlsx &lt;path&gt; web|app"]
+    F -- Sau code change --> F3["/test/generate_regression_suite"]
+    F -- Có bug --> F4["/test/gen-bug-report"]
+```
+
+**❌ Không:** sinh TC khi chưa đọc SPEC · test data placeholder · gộp validation nhiều field · auto-submit bug lên Backlog · lẫn vai trò với `qa-agent` (không chạy test suite) · gọi thẳng `/gen-tcs` khi chưa có `plan-tcs.md` · skip user confirm giữa các bước pipeline.
+
+---
 
 ### 3.4 `designer-agent` — UI/UX Designer
 
-| | |
-|---|---|
-| **Đọc Bước 1** | SPEC.md · `.claude/context/designer-context.md` (**BẮT BUỘC**) · `.claude/rules/design_rule.md` · `.claude/skills/figma-design/SKILL.md` · `skill://figma/figma-use/SKILL.md` (MCP) · `skill://figma/figma-generate-design/SKILL.md` (MCP) |
-| **Đọc Figma Bước 3** | `search_design_system` cho ~10 components (Sidebar, Header, Table, Button, Input, DatePicker, StatusBadge, Pagination, Modal, Icon) · `get_design_context` + `get_metadata` + `get_variable_defs` của reference screen |
-| **Thực thi** | Bước 2: phân tích ## Screens · Bước 3: Component Discovery — **Gate check** (thiếu component → dừng, hỏi user A/B/C) · Bước 4: import component + tạo frame + bind variables + fill sample data thật (không placeholder) · Bước 5: update SPEC.md |
-| **Output** | Figma frames HIGH-FIDELITY (cloud) + **cột Figma Link trong SPEC.md ## Screens** + append `[Design]` notes vào SPEC ## Open Questions (nếu phát hiện gap) |
-| **Handover** | → Tech Lead Tasks (chờ DESIGN.md xong) → FE/Mobile đọc Figma URL từ task file |
-| **Không** | Tạo file `.md` riêng (UI-SPEC.md / figma-context.md) · Vẽ wireframe (rectangle + text) · Tự generate component khi thiếu (phải hỏi user) · Commit / push code |
+```mermaid
+flowchart TD
+    A["/create-ui-design &lt;SPEC.md&gt;"] --> B[Đọc SPEC.md +<br/>context/designer-context BẮT BUỘC +<br/>rules/design_rule.md +<br/>skill figma-design +<br/>MCP skills figma-use / figma-generate-design]
+    B --> C["Phân tích ## Screens"]
+    C --> D[search_design_system 10 components:<br/>Sidebar · Header · Table · Button ·<br/>Input · DatePicker · StatusBadge ·<br/>Pagination · Modal · Icon]
+    D --> E[get_design_context + get_metadata +<br/>get_variable_defs của reference screen]
+    E --> F{Thiếu component<br/>trong design system?}
+    F -- Có --> G[GATE - DỪNG<br/>hỏi user chọn:<br/>A dùng component thay thế + note<br/>B tạo component mới<br/>C skip screen]
+    G --> F
+    F -- Không --> H[Import component instance +<br/>tạo frame HIGH-FIDELITY +<br/>bind variables +<br/>fill sample data thật]
+    H --> I["Update SPEC.md ## Screens<br/>điền cột Figma Link"]
+    I --> J{Phát hiện gap?}
+    J -- Có --> K["Append [Design] notes<br/>vào SPEC ## Open Questions"]
+    J -- Không --> L[Bàn giao Tech Lead Tasks<br/>chờ DESIGN.md xong<br/>FE/Mobile đọc Figma URL từ task]
+    K --> L
+```
+
+**❌ Không:** tạo file `.md` riêng (UI-SPEC.md / figma-context.md) · vẽ wireframe (rectangle + text) · tự generate component khi thiếu · commit / push code.
+
+---
 
 ### 3.5 `techlead-tasks-agent` — Tech Lead Tasks
 
-| | |
-|---|---|
-| **Đọc Bước 1** | `tilth_files("*/DESIGN.md")` · `doc-structure.md` · `.claude/skills/task-decomposition/SKILL.md` · SPEC.md ## Screens (lấy Screen Code + Figma URL cho FE/Mobile task) |
-| **Đọc Figma (optional)** | `get_metadata` + `get_screenshot` (estimate complexity) |
-| **Đọc code Bước 2** | `tilth_search` + `tilth_read` + `tilth_deps` (blast radius vào Non-Regression table) |
-| **Thực thi** | Bước 3: map repo → Backlog Category + ROLE tag `[BE]`/`[FE]` · Bước 4: phase numbering (1: DB migration, 2: Service+API, 3: FE+Mobile song song, 4: Integration) · Bước 6: template BE · Bước 6b: template FE/Mobile (3 sub-steps: service → hooks → wire UI) |
-| **Output** | `<DOCS_ROOT>/features/<feature>/<repo>/tasks/task-{phase}-{index}.md` — mỗi task ~4-8h, có: Backlog Info · Metadata · Mục tiêu · Context · Yêu cầu implement · **Unit Tests BẮT BUỘC** · API Definition (Phase 2) · Non-Regression Table · Không được làm · DoD |
-| **Handover** | → PM (`/create-plan`) |
-| **Không** | Task > 8h · Task thiếu Unit Test · Tự đoán khi DESIGN mơ hồ · Sửa source code |
+```mermaid
+flowchart TD
+    A["/create-tasks &lt;feature/&gt;"] --> B["Đọc tilth_files */DESIGN.md +<br/>doc-structure.md +<br/>skill task-decomposition +<br/>SPEC ## Screens (Code + Figma URL)"]
+    B --> C{Cần estimate complexity?}
+    C -- Có --> D[get_metadata + get_screenshot]
+    C -- Không --> E[tilth_search + tilth_read +<br/>tilth_deps blast radius]
+    D --> E
+    E --> F["Map repo → Backlog Category +<br/>ROLE tag [BE] / [FE]"]
+    F --> G[Phase numbering:<br/>1 DB migration<br/>2 Service + API<br/>3 FE + Mobile song song 3 sub-steps<br/>4 Integration test]
+    G --> H[Estimate 4-8h per task]
+    H --> I{Task &gt; 8h?}
+    I -- Có --> J[Chia nhỏ]
+    J --> H
+    I -- Không --> K{DESIGN mơ hồ?}
+    K -- Có --> L[Hỏi user - KHÔNG tự đoán]
+    L --> K
+    K -- Không --> M["Viết task-{phase}-{index}.md:<br/>Backlog Info · Metadata · Mục tiêu ·<br/>Context · Yêu cầu implement ·<br/>Unit Tests BẮT BUỘC ·<br/>API Definition (Phase 2) ·<br/>Non-Regression Table · Không được làm · DoD"]
+    M --> N[Bàn giao PM<br/>/create-plan]
+```
+
+**❌ Không:** task > 8h · task thiếu Unit Test · tự đoán khi DESIGN mơ hồ · sửa source code.
+
+---
 
 ### 3.6 `pm-agent` — Project Manager
 
-| | |
-|---|---|
-| **Đọc Bước 1** | SPEC.md · `.claude/context/specification.md` · `.claude/skills/project-planning/SKILL.md` · `tilth_files` list DESIGN.md + `tasks/task-*.md` · check ## Screens Figma Link |
-| **Đọc Figma (optional)** | `get_screenshot` + `get_metadata` (estimate complexity) |
-| **Đọc Backlog Bước 4.2** | `get_project_list` · `get_issue` (parent) · `get_users` · `get_categories` · `get_version_milestone_list` · `get_issue_types` · `get_priorities` |
-| **Thực thi** | Bước 2: hỏi 5 câu (deadline + phase-gate, dev available, dependency, deploy STG/PROD, QA riêng hay dev tự test) · Bước 3: viết PLAN · Bước 4 (optional): sync Backlog — tạo issue thử → user confirm → batch tạo N-1 issues |
-| **Output** | `<DOCS_ROOT>/features/<feature>/PLAN.md` — sections: Summary · Phase-Gate Alignment · Timeline (Gantt ASCII) · **Contract Lock** (REST + WebSocket + Push) · Dependencies & Risks · Assignees · DoD · (optional) Backlog issue keys |
-| **Handover** | → Dev (BE Phase 1 trước, sau đó FE/Mobile Phase 3 song song) · optional `/create-backlog` |
-| **Không** | Phân tích yêu cầu (BA việc) · Design kỹ thuật (Tech Lead việc) · Ghi số giả (dùng `TBD`) · Sửa source code |
+```mermaid
+flowchart TD
+    A["/create-plan &lt;feature/&gt;"] --> B["Đọc SPEC + context/specification.md +<br/>skill project-planning +<br/>tilth_files DESIGN + tasks/task-* +<br/>check ## Screens Figma Link"]
+    B --> C[Hỏi 5 câu:<br/>1 Deadline + phase-gate<br/>2 Dev available<br/>3 Dependency<br/>4 Deploy STG / PROD<br/>5 QA riêng hay dev tự test]
+    C --> D["Viết PLAN.md:<br/>Summary · Phase-Gate · Timeline Gantt ASCII ·<br/>Contract Lock REST+WS+Push ·<br/>Dependencies + Risks · Assignees · DoD"]
+    D --> E{User yêu cầu sync Backlog?}
+    E -- Không --> J[Bàn giao Dev<br/>BE Phase 1 trước<br/>FE/Mobile Phase 3 sau]
+    E -- Có --> F[Backlog metadata:<br/>get_project_list + get_issue +<br/>get_users + get_categories +<br/>get_version_milestone_list +<br/>get_issue_types + get_priorities]
+    F --> G[Tạo 1 issue thử → user confirm]
+    G --> H{User OK?}
+    H -- Không --> G
+    H -- OK --> I[Batch tạo N-1 issues còn lại<br/>ghi Backlog issue keys vào PLAN.md]
+    I --> J
+```
+
+**❌ Không:** phân tích yêu cầu (BA việc) · design kỹ thuật (Tech Lead việc) · ghi số giả (dùng `TBD`) · sửa source code.
+
+---
 
 ### 3.7 `backend-agent` — Backend Developer (NestJS)
 
-| | |
-|---|---|
-| **Đọc Bước 1** | task-x-y.md · SPEC.md · DESIGN.md · `.claude/skills/nestjs-best-practices/SKILL.md` · `postgresql/SKILL.md` (+ `redis-development/SKILL.md` nếu Redis optimization) |
-| **Đọc Figma (optional)** | `get_design_context` + `get_screenshot` (nếu API response cần khớp UI) |
-| **Đọc code Bước 2-3** | `tilth_search` pattern hiện có · `tilth_deps` blast radius |
-| **Thực thi** | Implement (module/service/entity/DTO/migration/guard/interceptor) · Chạy `npm run lint` + `test` + `test:cov` · Self-review checklist (snake_case column, migration up/down, không N+1, Redis TTL, DTO class-validator, không hard-code secret) |
-| **Output** | Code + Unit Test coverage ≥ 80% service / ≥ 70% controller · **API Contract table** (handoff FE/Mobile) · Memory Update Gate: `api-catalog.md` / `erd.md` / `patterns.md` (backend repo overview) |
-| **Handover** | → QA verify → sau QA PASS: copy API Contract vào task-3-x FE/Mobile |
-| **Không** | Sửa migration/linter/test config không được yêu cầu rõ · Commit khi không được yêu cầu · Hard-code secret · N+1 query |
+```mermaid
+flowchart TD
+    A[Nhận task-x-y.md] --> B[Đọc task + SPEC + DESIGN +<br/>skill nestjs-best-practices +<br/>postgresql SKILL<br/>+ redis-development nếu có cache]
+    B --> C{API response cần khớp UI?}
+    C -- Có --> D[get_design_context + get_screenshot]
+    C -- Không --> E[tilth_search pattern +<br/>tilth_deps blast radius]
+    D --> E
+    E --> F[Implement:<br/>module · service · entity ·<br/>DTO class-validator · migration up/down ·<br/>guard · interceptor]
+    F --> G[Chạy npm run lint + test + test:cov]
+    G --> H{≥80% service<br/>≥70% controller?}
+    H -- Không --> F
+    H -- OK --> I[Self-review checklist:<br/>snake_case column ·<br/>migration up+down ·<br/>không N+1 · Redis TTL ·<br/>không hard-code secret]
+    I --> J["Output: Code +<br/>API Contract table (handoff) +<br/>Memory Update Gate:<br/>api-catalog.md / erd.md / patterns.md"]
+    J --> K[Bàn giao QA verify]
+    K --> L{QA PASS?}
+    L -- FAIL --> F
+    L -- PASS --> M[Copy API Contract<br/>vào task-3-x FE/Mobile]
+```
+
+**❌ Không:** sửa migration / linter / test config không được yêu cầu · commit khi không được yêu cầu · hard-code secret · N+1 query.
+
+---
 
 ### 3.8 `frontend-agent` — Frontend Developer (React)
 
-| | |
-|---|---|
-| **Đọc Bước 1** | task-x-y.md · **BE task-2-X.md để lấy API Contract** (không tự đoán endpoint) |
-| **Đọc Bước 2-3** | SPEC.md · DESIGN.md · `.claude/skills/react-expert/SKILL.md` + `frontend-review/SKILL.md` |
-| **Đọc Figma (ưu tiên cao)** | Song song 4 tools: `get_metadata` + `get_design_context` + `get_variable_defs` + `get_screenshot` (nếu có URL trong task Context / SPEC ## Screens / user paste) |
-| **Đọc code Bước 4** | `tilth_search` pattern hiện có |
-| **Thực thi** | 3 sub-steps: Step 1 `src/services/<feature>Api.ts` → Step 2 `src/hooks/use<Feature>.ts` (TanStack Query v5 object syntax) → Step 3 `src/pages/<Feature>Page.tsx` (wire hooks vào UI) · Chạy `lint` + `type-check` + `build` + `test --coverage` · **Integration check localhost BE+FE** |
-| **Output** | Code + Unit Tests ≥ 70% · Memory Update Gate: `patterns.md` per repo |
-| **Handover** | → QA verify |
-| **Không** | Hard-code URL (dùng `import.meta.env.VITE_API_URL`) · Tự đoán endpoint · Mock data trong production code · Lẫn domain giữa 2 repo frontend · `useHistory` (dùng `useNavigate`) · Redux cho server state |
+```mermaid
+flowchart TD
+    A[Nhận task-x-y.md] --> B[BẮT BUỘC đọc BE task-2-X.md<br/>lấy API Contract<br/>KHÔNG tự đoán endpoint]
+    B --> C[Đọc SPEC + DESIGN +<br/>skill react-expert + frontend-review]
+    C --> D{Có Figma URL<br/>trong task/SPEC/user paste?}
+    D -- Có --> E[SONG SONG 4 tools:<br/>get_metadata + get_design_context +<br/>get_variable_defs + get_screenshot]
+    D -- Không --> F[tilth_search pattern hiện có]
+    E --> F
+    F --> G["Step 1: src/services/&lt;feature&gt;Api.ts"]
+    G --> H["Step 2: src/hooks/use&lt;Feature&gt;.ts<br/>TanStack Query v5 object syntax"]
+    H --> I["Step 3: src/pages/&lt;Feature&gt;Page.tsx<br/>wire hooks vào UI"]
+    I --> J[Chạy lint + type-check +<br/>build + test --coverage]
+    J --> K{≥70% coverage?}
+    K -- Không --> G
+    K -- OK --> L[Integration check localhost<br/>BE + FE]
+    L --> M[Memory Update Gate:<br/>patterns.md per repo]
+    M --> N[Bàn giao QA verify]
+```
+
+**❌ Không:** hard-code URL (dùng `import.meta.env.VITE_API_URL`) · tự đoán endpoint · mock data trong production code · lẫn domain giữa 2 repo frontend · `useHistory` (dùng `useNavigate`) · Redux cho server state.
+
+---
 
 ### 3.9 `mobile-agent` — Mobile Developer (Flutter)
 
-| | |
-|---|---|
-| **Đọc Bước 1-2** | task-x-y.md · SPEC.md · DESIGN.md · `.claude/skills/flutter-review/SKILL.md` |
-| **Đọc Figma (ưu tiên cao)** | Song song 4 tools: `get_metadata` + `get_design_context` + `get_variable_defs` + `get_screenshot` (nếu có URL) |
-| **Đọc code Bước 4** | `tilth_search` pattern hiện có |
-| **Thực thi** | Implement với `hooks_riverpod` + Retrofit `@RestApi()` + `freezed` + `auto_route` + Socket.IO cleanup · Chạy `flutter analyze` + `flutter test` · Self-review (Riverpod, không Dio trực tiếp, socket `off()` trong dispose, `flutter_screenutil` `.w`/`.h`/`.sp`) |
-| **Output** | Code + Unit Tests ≥ 75% provider · Memory Update Gate: `structure.md` / `patterns.md` |
-| **Handover** | → QA verify |
-| **Không** | Provider/BLoC/GetX · Hard-code pixel/hex · Sửa `.g.dart`/`.freezed.dart` thủ công · Đảo version convention (DEV `0.0.x` · STG `0.1.x` · PROD `1.0.x`) · `Navigator.push` trực tiếp |
+```mermaid
+flowchart TD
+    A[Nhận task-x-y.md] --> B[Đọc task + SPEC + DESIGN +<br/>skill flutter-review]
+    B --> C{Có Figma URL?}
+    C -- Có --> D[SONG SONG 4 tools:<br/>get_metadata + get_design_context +<br/>get_variable_defs + get_screenshot]
+    C -- Không --> E[tilth_search pattern hiện có]
+    D --> E
+    E --> F["Implement:<br/>hooks_riverpod + Retrofit @RestApi +<br/>freezed model + auto_route +<br/>Socket.IO cleanup"]
+    F --> G[Chạy flutter analyze + flutter test]
+    G --> H{≥75% provider coverage?}
+    H -- Không --> F
+    H -- OK --> I["Self-review:<br/>chỉ Riverpod (không Provider/BLoC/GetX) ·<br/>không Dio trực tiếp (chỉ qua Retrofit) ·<br/>socket off() trong dispose ·<br/>flutter_screenutil .w/.h/.sp"]
+    I --> J[Memory Update Gate:<br/>structure.md · patterns.md]
+    J --> K[Bàn giao QA verify]
+```
+
+**❌ Không:** Provider/BLoC/GetX · hard-code pixel/hex · sửa `.g.dart`/`.freezed.dart` thủ công · đảo version convention (DEV `0.0.x` · STG `0.1.x` · PROD `1.0.x`) · `Navigator.push` trực tiếp.
+
+---
 
 ### 3.10 `qa-agent` — QA Engineer
 
-| | |
-|---|---|
-| **Đọc Bước 1** | task-x-y.md (coverage target + Non-Regression table) · SPEC.md (AC + ## Screens) · `.claude/skills/requirements_analyzer/SKILL.md` |
-| **Đọc Figma (optional)** | `get_screenshot` + `get_design_context` (nếu verify UI, so sánh với code thực) |
-| **Thực thi** | Bước 2: chạy `lint` + `build` + `test` + `test:cov` per repo (NestJS: `npm run test:cov` · React: `npm run type-check + build` · Flutter: `flutter analyze + test`) · Bước 3: validate từng AC (happy + edge + boundary) · Bước 4: check Non-Regression table |
-| **Output** | **QA Report** per task — sections: Test Results (unit/coverage/lint/build) · AC table (pass/fail per AC + lý do) · Non-Regression table · Kết luận PASS/FAIL với issue list (file:line + đề xuất fix) |
-| **Handover** | PASS → status Testing Request → QC execution checklist (7a) · FAIL → dev fix → gọi lại QA |
-| **Không** | Sửa source code · Sinh manual TC (qc-agent việc) · So với assumption thay vì SPEC · Thay đổi test cases đã approve |
+```mermaid
+flowchart TD
+    A["Hãy là QA verify task: &lt;path&gt;"] --> B["Đọc task-x-y.md (coverage target + Non-Regression) +<br/>SPEC AC + ## Screens +<br/>skill requirements_analyzer"]
+    B --> C{Verify UI?}
+    C -- Có --> D[get_screenshot + get_design_context<br/>đối chiếu code thực]
+    C -- Không --> E["Chạy per repo:<br/>NestJS: npm run test:cov<br/>React: type-check + build + test<br/>Flutter: flutter analyze + test"]
+    D --> E
+    E --> F[Validate từng AC:<br/>happy + edge + boundary<br/>đối chiếu AC ID cụ thể từ SPEC]
+    F --> G[Check Non-Regression table<br/>từ task-x-y.md]
+    G --> H["Viết QA Report:<br/>Test Results (unit/coverage/lint/build) ·<br/>AC table (pass/fail per AC + lý do) ·<br/>Non-Regression table · Kết luận"]
+    H --> I{Kết luận?}
+    I -- FAIL --> J[Issue list file:line +<br/>đề xuất fix →<br/>quay lại Dev]
+    J --> E
+    I -- PASS --> K[Status Testing Request →<br/>QC execution checklist 7a]
+```
+
+**❌ Không:** sửa source code · sinh manual TC (qc-agent việc) · so với assumption thay vì SPEC · thay đổi test cases đã approve.
+
+---
 
 ### 3.11 `qc-automation-agent` — QC Automation Tester
 
-| | |
-|---|---|
-| **Đọc Bước 1** | Kiểm tra `<e2e-repo>/.env.test` tồn tại · Đọc `<ROLE>_URL` env · `curl` probe website · `npx playwright --version` |
-| **Đọc Bước 2** | SPEC.md (Actors, Preconditions, Out of Scope, Screen Code) · optional `<testcases>` TC file (**ưu tiên cao hơn SPEC nếu có** — chế độ TC-driven, không tự thêm scenario) |
-| **Đọc Figma Bước 3** | `get_design_context` + `get_screenshot` (extract labels cho selectors: button, placeholder, heading, toast) |
-| **Thực thi** | Bước 4: lập danh sách scenarios (**max 10 nếu SPEC-driven** để đảm bảo chất lượng) · Bước 5: sinh `.spec.ts` per TC (1 TC = 1 file, tự lập, dùng `storageState` + `getByRole`/`getByPlaceholder`/`getByText`/`getByTestId`) · Bước 6: `npx playwright test --headed --project=<target-app> --no-deps` · Bước 7: parse output |
-| **Output** | `<e2e-repo>/e2e/<target-app>/<feature>/*.spec.ts` (1 file per TC) + `reports/<feature>/execution-report.md` (bảng PASS/FAIL/SKIP + screenshots FAIL + Lỗi cần xử lý + Bước tiếp theo) |
-| **Không** | Sửa source code app · CSS class selector (`.btn-primary`) · `waitForTimeout` cứng · Hard-code credentials trong `.spec.ts` (dùng `process.env`) · > 20 TC lần đầu (SPEC-driven) · Test phụ thuộc nhau · TC-driven mà tự thêm scenario |
+```mermaid
+flowchart TD
+    A["Hãy là QC Automation<br/>test feature: &lt;path&gt;, Figma: &lt;url&gt;"] --> B["Preflight:<br/>&lt;e2e-repo&gt;/.env.test tồn tại +<br/>&lt;ROLE&gt;_URL env +<br/>curl probe website +<br/>npx playwright --version"]
+    B --> C{Có &lt;testcases&gt; TC file?}
+    C -- "Có (TC-driven)" --> D[Đọc TC file<br/>KHÔNG tự thêm scenario]
+    C -- "Không (SPEC-driven)" --> E["Đọc SPEC:<br/>Actors · Preconditions ·<br/>Out of Scope · Screen Code"]
+    D --> F[get_design_context + get_screenshot<br/>extract labels cho selectors:<br/>button · placeholder · heading · toast]
+    E --> F
+    F --> G{Chế độ?}
+    G -- SPEC-driven --> H[Max 10 scenarios lần đầu<br/>để đảm bảo chất lượng]
+    G -- TC-driven --> I[1 scenario per TC file]
+    H --> J["Sinh .spec.ts per TC (1 file = 1 TC):<br/>storageState + getByRole /<br/>getByPlaceholder / getByText / getByTestId"]
+    I --> J
+    J --> K["Chạy: npx playwright test --headed<br/>--project=&lt;target-app&gt; --no-deps"]
+    K --> L[Parse output]
+    L --> M["Output:<br/>&lt;e2e-repo&gt;/e2e/&lt;target-app&gt;/&lt;feature&gt;/*.spec.ts +<br/>reports/&lt;feature&gt;/execution-report.md<br/>(PASS/FAIL/SKIP + screenshots FAIL +<br/>Lỗi cần xử lý + Bước tiếp theo)"]
+```
+
+**❌ Không:** sửa source code app · CSS class selector (`.btn-primary`) · `waitForTimeout` cứng · hard-code credentials trong `.spec.ts` (dùng `process.env`) · > 20 TC lần đầu (SPEC-driven) · test phụ thuộc nhau · TC-driven mà tự thêm scenario.
 
 ---
 
