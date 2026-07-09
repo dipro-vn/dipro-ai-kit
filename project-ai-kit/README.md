@@ -6,6 +6,44 @@
 
 ## Quy trình từ A → Z
 
+### Bước 0 — Cài & đăng nhập Claude Code CLI
+
+Kit này chạy trên **Claude Code CLI** — cần cài 1 lần trước khi làm gì.
+
+**Yêu cầu:** Node.js ≥ 18 (khuyến nghị dùng `nvm`).
+
+```bash
+# Cài Claude Code CLI (global)
+npm install -g @anthropic-ai/claude-code
+
+# Kiểm tra
+claude --version
+```
+
+**Đăng nhập lần đầu:**
+
+```bash
+claude    # chạy tại thư mục bất kỳ
+```
+
+Lần chạy đầu tiên CLI sẽ mở browser để login bằng Anthropic account (hoặc API key nếu tổ chức dùng key riêng). Sau khi login → thoát bằng `/exit` hoặc `Ctrl+D`, quay lại làm Bước 1.
+
+**Cách dùng cơ bản (ghi nhớ 3 lệnh):**
+
+| Lệnh | Tác dụng |
+|---|---|
+| `claude` | Mở session interactive tại thư mục hiện tại (default) |
+| `/<command>` | Chạy slash command trong session — ví dụ `/init-kit`, `/create-spec`, `/test/gen-tcs` |
+| `/exit` | Thoát session (hoặc `Ctrl+D`) |
+
+Trong session có thể trigger agent bằng **natural language** ("hãy là BA, làm SPEC cho login") hoặc **slash command** (`/create-spec login`) — cùng kết quả.
+
+Muốn xem full help / config: gõ `/help` bên trong session, hoặc `claude --help` ngoài shell.
+
+> **Alternative:** Nếu công ty đã cấp Claude Code qua IDE extension (VS Code / JetBrains) hoặc desktop app thì cũng dùng được — chỉ cần mở đúng thư mục `<ten-du-an>` là kit hoạt động. Các bước bên dưới giả định dùng CLI.
+
+---
+
 ### Bước 1 — Chuẩn bị thư mục dự án mới
 
 ```bash
