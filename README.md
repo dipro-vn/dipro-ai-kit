@@ -108,8 +108,11 @@ pip install -r requirements.txt
 mkdocs serve   # http://localhost:8000
 ```
 
+Video Demo tham khảo: [Demo](https://drive.google.com/file/d/1tNF06n02QX176GS7vqxYTISAEK496mXc/view)
 ---
 
 <div align="center">
   Built with ❤️ by <strong>DIPRO TECH</strong> — <a href="https://www.dipro-tech.com">dipro-tech.com</a>
 </div>
+
+
