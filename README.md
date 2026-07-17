@@ -1,7 +1,7 @@
 <div align="center">
   <img src="https://www.dipro-tech.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fimg-dipro-menu2.c404d723.png&w=1536&q=75" alt="DIPRO TECH" width="280" />
 
-  # Dipro AI Kit
+  # Dipro AI Boost
 
   **Bộ cấu hình Claude Code chuẩn hóa — toàn bộ vòng đời phát triển phần mềm tại Dipro Tech**
 
@@ -13,7 +13,7 @@
 
 ## Tổng quan
 
-**Dipro AI Kit** là monorepo chứa **6 kit chuyên biệt** dành cho từng vai trò trong quy trình phát triển phần mềm. Mỗi kit là tập hợp cấu hình **Claude Code** reusable gồm agents, commands, skills, workflows, và rules đã được chuẩn hóa.
+**Dipro AI Boost** là monorepo chứa **6 kit chuyên biệt** dành cho từng vai trò trong quy trình phát triển phần mềm. Mỗi kit là tập hợp cấu hình **Claude Code** reusable gồm agents, commands, skills, workflows, và rules đã được chuẩn hóa.
 
 ```
 dipro-ai-kit/

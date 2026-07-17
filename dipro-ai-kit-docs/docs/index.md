@@ -1,12 +1,12 @@
-# Dipro AI Kit
+# Dipro AI Boost
 
 > **Bộ công cụ AI agents chuẩn hóa** toàn bộ vòng đời phát triển phần mềm tại Dipro — từ phân tích yêu cầu đến deploy.
 
 ---
 
-## Dipro AI Kit là gì?
+## Dipro AI Boost là gì?
 
-**Dipro AI Kit** là một **monorepo** chứa **6 kit chuyên biệt** dành cho từng vai trò và tầng công nghệ trong quy trình phát triển phần mềm. Mỗi kit là một bộ cấu hình **Claude Code** reusable gồm agents, commands, skills, workflows, rules, và tools đã được chuẩn hóa.
+**Dipro AI Boost** là một **monorepo** chứa **6 kit chuyên biệt** dành cho từng vai trò và tầng công nghệ trong quy trình phát triển phần mềm. Mỗi kit là một bộ cấu hình **Claude Code** reusable gồm agents, commands, skills, workflows, rules, và tools đã được chuẩn hóa.
 
 ```
 dipro-ai-kit/
@@ -20,7 +20,7 @@ dipro-ai-kit/
 
 ---
 
-## Tại sao cần Dipro AI Kit?
+## Tại sao cần Dipro AI Boost?
 
 | Vấn đề | Giải pháp của Kit |
 |--------|------------------|
